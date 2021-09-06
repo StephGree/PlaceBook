@@ -24,6 +24,8 @@ import com.raywenderlich.placebook.R
 import com.raywenderlich.placebook.adapter.BookmarkInfoWindowAdapter
 import com.raywenderlich.placebook.databinding.ActivityMapsBinding
 import com.raywenderlich.placebook.viewmodel.MapsViewModel
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -58,23 +60,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+        setupMapListeners()
         getCurrentLocation()
-
-        // Add a marker in Sydney and move the camera
-        val sydney = LatLng(-34.0, 151.0)
-        map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        map.moveCamera(CameraUpdateFactory.newLatLng(sydney))
-        map.setOnPoiClickListener {
-            displayPoi(it)
-        }
     }
 
 
     private fun setupPlacesClient() {
-        Places.initialize(
-            applicationContext,
+        Places.initialize(applicationContext,
             getString(R.string.google_maps_key))
-
         placesClient = Places.createClient(this)
     }
 
@@ -94,9 +87,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
     private fun handleInfoWindowClick(marker: Marker) {
         val placeInfo = (marker.tag as PlaceInfo)
-        if (placeInfo.place != null) {
-            mapsViewModel.addBookmarkFromPlace(placeInfo.place,
-                placeInfo.image)
+        GlobalScope.launch {
+            placeInfo.place?.let { mapsViewModel.addBookmarkFromPlace(it,placeInfo.image) }
         }
         marker.remove()
     }
@@ -172,9 +164,37 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun addPlaceMarker(
+        bookmark: MapsViewModel.BookmarkMarkerView): Marker? {
+        val marker = map.addMarker(MarkerOptions()
+            .position(bookmark.location)
+            .icon(BitmapDescriptorFactory.defaultMarker(
+                BitmapDescriptorFactory.HUE_AZURE))
+            .alpha(0.8f))
+        marker.tag = bookmark
+        return marker
+    }
     private fun displayPoi(pointOfInterest: PointOfInterest) {
         displayPoiGetPlaceStep(pointOfInterest)
     }
+    private fun displayAllBookmarks(
+        bookmarks: List<MapsViewModel.BookmarkMarkerView>) {
+        bookmarks.forEach { addPlaceMarker(it) }
+    }
+    private fun createBookmarkMarkerObserver() {
+        // 1
+        mapsViewModel.getBookmarkMarkerViews()?.observe(
+            this, {
+                // 2
+                map.clear()
+                // 3
+                it?.let {
+                    displayAllBookmarks(it)
+                }
+            })
+    }
+
+
 
     private fun displayPoiGetPlaceStep(pointOfInterest: PointOfInterest) {
         val placeId = pointOfInterest.placeId
