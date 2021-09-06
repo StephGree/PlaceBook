@@ -2,7 +2,7 @@ package com.raywenderlich.placebook.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-class Bookmark {
+
     // 1
     @Entity
 // 2
@@ -18,4 +18,3 @@ class Bookmark {
         var phone: String = ""
     )
 
-}
