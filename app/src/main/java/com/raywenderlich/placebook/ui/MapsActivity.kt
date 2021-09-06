@@ -48,54 +48,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         setupLocationClient()
         setupPlacesClient()
     }
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         setupMapListeners()
         getCurrentLocation()
     }
-
-
     private fun setupPlacesClient() {
         Places.initialize(applicationContext,
             getString(R.string.google_maps_key))
         placesClient = Places.createClient(this)
-    }
-
-    private fun setupLocationClient() {
-        fusedLocationClient =
-            LocationServices.getFusedLocationProviderClient(this)
-
-    }
-
-    private fun requestLocationPermissions() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-            REQUEST_LOCATION
-        )
-
-    }
-    private fun handleInfoWindowClick(marker: Marker) {
-        val placeInfo = (marker.tag as PlaceInfo)
-        GlobalScope.launch {
-            placeInfo.place?.let { mapsViewModel.addBookmarkFromPlace(it,placeInfo.image) }
-        }
-        marker.remove()
-    }
-
-    companion object {
-        private const val REQUEST_LOCATION = 1
-        private const val TAG = "MapsActivity"
     }
     private fun setupMapListeners() {
         map.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this))
@@ -103,99 +64,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             displayPoi(it)
         }
     }
-
-    private fun getCurrentLocation() {
-        // 1
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) !=
-            PackageManager.PERMISSION_GRANTED)
-         {
-            // 2
-            requestLocationPermissions()
-        }
-        else
-        {
-
-            // 3
-            map.isMyLocationEnabled = true
-
-            fusedLocationClient.lastLocation.addOnCompleteListener {
-                val location = it.result
-                if (location != null) {
-                    // 4
-                    val latLng = LatLng(
-                        location.latitude,
-                        location.longitude)
-
-                    // 5
-
-                    // 6
-                    val update = CameraUpdateFactory.newLatLngZoom(
-                        latLng,
-                        16.0f)
-
-                    // 7
-                    map.moveCamera(update)
-                }
-                else {
-                    // 8
-                    Log.e(TAG, "No location found")
-                }
-            }
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray)
-
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_LOCATION) {
-            if (grantResults.size == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getCurrentLocation()
-            }
-            else {
-                Log.e(TAG, "Location permission denied")
-            }
-        }
-    }
-
-    private fun addPlaceMarker(
-        bookmark: MapsViewModel.BookmarkMarkerView): Marker? {
-        val marker = map.addMarker(MarkerOptions()
-            .position(bookmark.location)
-            .icon(BitmapDescriptorFactory.defaultMarker(
-                BitmapDescriptorFactory.HUE_AZURE))
-            .alpha(0.8f))
-        marker.tag = bookmark
-        return marker
-    }
     private fun displayPoi(pointOfInterest: PointOfInterest) {
         displayPoiGetPlaceStep(pointOfInterest)
     }
-    private fun displayAllBookmarks(
-        bookmarks: List<MapsViewModel.BookmarkMarkerView>) {
-        bookmarks.forEach { addPlaceMarker(it) }
-    }
-    private fun createBookmarkMarkerObserver() {
-        // 1
-        mapsViewModel.getBookmarkMarkerViews()?.observe(
-            this, {
-                // 2
-                map.clear()
-                // 3
-                it?.let {
-                    displayAllBookmarks(it)
-                }
-            })
-    }
-
-
-
     private fun displayPoiGetPlaceStep(pointOfInterest: PointOfInterest) {
         val placeId = pointOfInterest.placeId
         val placeFields = listOf(
@@ -231,7 +102,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun displayPoiGetPhotoStep(place: Place) {
         // 1
         val photoMetadata = place
-            .getPhotoMetadatas()?.get(0)
+            .photoMetadatas?.get(0)
         // 2
         if (photoMetadata == null) {
             displayPoiDisplayStep(place, null)
@@ -263,9 +134,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
     }
-
-
-
     private fun displayPoiDisplayStep(place: Place, photo: Bitmap?)
     {
         val iconPhoto = if (photo == null) {
@@ -282,6 +150,113 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         marker?.tag = PlaceInfo(place, photo)
 
     }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray)
+
+    {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_LOCATION) {
+            if (grantResults.size == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getCurrentLocation()
+            }
+            else {
+                Log.e(TAG, "Location permission denied")
+            }
+        }
+    }
+    private fun setupLocationClient() {
+        fusedLocationClient =
+            LocationServices.getFusedLocationProviderClient(this)
+
+    }
+    private fun handleInfoWindowClick(marker: Marker) {
+        val placeInfo = (marker.tag as PlaceInfo)
+        GlobalScope.launch {
+            placeInfo.place?.let { mapsViewModel.addBookmarkFromPlace(it,placeInfo.image) }
+        }
+        marker.remove()
+    }
+    private fun createBookmarkMarkerObserver() {
+        // 1
+        mapsViewModel.getBookmarkMarkerViews()?.observe(
+            this, {
+                // 2
+                map.clear()
+                // 3
+                it?.let {
+                    displayAllBookmarks(it)
+                }
+            })
+    }
+    private fun displayAllBookmarks(
+        bookmarks: List<MapsViewModel.BookmarkMarkerView>) {
+        bookmarks.forEach { addPlaceMarker(it) }
+    }
+    private fun addPlaceMarker(
+        bookmark: MapsViewModel.BookmarkMarkerView): Marker? {
+        val marker = map.addMarker(MarkerOptions()
+            .position(bookmark.location)
+            .icon(BitmapDescriptorFactory.defaultMarker(
+                BitmapDescriptorFactory.HUE_AZURE))
+            .alpha(0.8f))
+        marker.tag = bookmark
+        return marker
+    }
+    private fun getCurrentLocation() {
+        // 1
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) !=
+            PackageManager.PERMISSION_GRANTED)
+        {
+            // 2
+            requestLocationPermissions()
+        }
+        else
+        {            // 3
+            map.isMyLocationEnabled = true
+
+            fusedLocationClient.lastLocation.addOnCompleteListener {
+                val location = it.result
+                if (location != null) {
+                    // 4
+                    val latLng = LatLng(
+                        location.latitude,
+                        location.longitude)
+
+                    // 5
+
+                    // 6
+                    val update = CameraUpdateFactory.newLatLngZoom(
+                        latLng,
+                        16.0f)
+
+                    // 7
+                    map.moveCamera(update)
+                }
+                else {
+                    // 8
+                    Log.e(TAG, "No location found")
+                }
+            }
+        }
+    }
+    private fun requestLocationPermissions() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            REQUEST_LOCATION
+        )
+
+    }
+    companion object {
+        private const val REQUEST_LOCATION = 1
+        private const val TAG = "MapsActivity"
+    }
+
     class PlaceInfo(val place: Place? = null,
                     val image: Bitmap? = null)
 }
