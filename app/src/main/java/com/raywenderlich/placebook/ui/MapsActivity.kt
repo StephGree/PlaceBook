@@ -62,6 +62,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         map.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this))
         map.setOnPoiClickListener {
             displayPoi(it)
+            map.setOnInfoWindowClickListener {
+                handleInfoWindowClick(it)
+            }
         }
     }
     private fun displayPoi(pointOfInterest: PointOfInterest) {
