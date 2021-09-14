@@ -2,6 +2,7 @@ package com.raywenderlich.placebook.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.databinding.DataBindingUtil
 import com.raywenderlich.placebook.R
@@ -38,19 +39,48 @@ class BookmarkDetailsActivity : AppCompatActivity() {
     private fun getIntentData() {
         // 1
         val bookmarkId = intent.getLongExtra(
-            MapsActivity.Companion.EXTRA_BOOKMARK_ID, 0
-        )
+            MapsActivity.Companion.EXTRA_BOOKMARK_ID, 0)
         // 2
 
-        bookmarkDetailsViewModel.getBookmark(bookmarkId)?.observe(this,
-            {
-                // 3
-                it?.let {
-                    bookmarkDetailsView = it
-                    // 4
-                    databinding.bookmarkDetailsView = it
-                    populateImageView()
-                }
-            })
+        bookmarkDetailsViewModel.getBookmark(bookmarkId)?.observe(this
+        ) {
+            // 3
+            it?.let {
+                bookmarkDetailsView = it
+                // 4
+                databinding.bookmarkDetailsView = it
+                populateImageView()
+            }
+        }
     }
+    override fun onCreateOptionsMenu(menu: android.view.Menu):
+            Boolean {
+        menuInflater.inflate(R.menu.menu_bookmark_details, menu)
+        return true
+    }
+    private fun saveChanges() {
+        val name = databinding.editTextName.text.toString()
+        if (name.isEmpty()) {
+            return
+        }
+        bookmarkDetailsView?.let { bookmarkView ->
+            bookmarkView.name = databinding.editTextName.text.toString()
+            bookmarkView.notes =
+                databinding.editTextNotes.text.toString()
+            bookmarkView.address =
+                databinding.editTextAddress.text.toString()
+            bookmarkView.phone =
+                databinding.editTextPhone.text.toString()
+            bookmarkDetailsViewModel.updateBookmark(bookmarkView)
+        }
+        finish()
+    }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
+            R.id.action_save -> {
+                saveChanges()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
 }

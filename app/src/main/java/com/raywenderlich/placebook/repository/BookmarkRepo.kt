@@ -17,10 +17,15 @@ class BookmarkRepo(context: Context) {
         bookmark.id = newId
         return newId
     }
-
     // 4
     fun createBookmark(): Bookmark {
         return Bookmark()
+    }
+    fun updateBookmark(bookmark: Bookmark) {
+        bookmarkDao.updateBookmark(bookmark)
+    }
+    fun getBookmark(bookmarkId: Long): Bookmark {
+        return bookmarkDao.loadBookmark(bookmarkId)
     }
 
     // 5
