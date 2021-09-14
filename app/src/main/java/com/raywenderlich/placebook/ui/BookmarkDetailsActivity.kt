@@ -17,8 +17,7 @@ class BookmarkDetailsActivity : AppCompatActivity() {
     private var bookmarkDetailsView:
             BookmarkDetailsViewModel.BookmarkDetailsView? = null
 
-    override fun onCreate(savedInstanceState: android.os.Bundle?)
-    {
+  override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         databinding = DataBindingUtil.setContentView(this,
             R.layout.activity_bookmark_details)

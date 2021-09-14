@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var map: GoogleMap
-    private lateinit var binding: ActivityMapsBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var placesClient: PlacesClient
     private val mapsViewModel by viewModels<MapsViewModel>()
@@ -39,8 +38,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityMapsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_maps)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
@@ -143,12 +141,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
     private fun displayPoiDisplayStep(place: Place, photo: Bitmap?)
     {
-        val iconPhoto = if (photo == null) {
-            BitmapDescriptorFactory.defaultMarker()
-        }
-        else {
-            BitmapDescriptorFactory.fromBitmap(photo)
-        }
+//        val iconPhoto = if (photo == null) {
+//            BitmapDescriptorFactory.defaultMarker()
+//        }
+//        else {
+//            BitmapDescriptorFactory.fromBitmap(photo)
+//        }
         val marker = map.addMarker(MarkerOptions()
             .position(place.latLng as LatLng)
             .title(place.name)
