@@ -7,7 +7,7 @@
         "com.raywenderlich.placebook.ui.BookmarkDetailsActivity">
     <item
         android:id="@+id/action_save"
-
+        android:icon="@drawable/ic_action_done"
         android:title="Save"
         app:showAsAction="ifRoom"/>
 </menu>

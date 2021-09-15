@@ -16,8 +16,8 @@
         android:adjustViewBounds="true"
         android:maxWidth="200dp"
         android:scaleType="fitStart"
-        android:contentDescription="@string/bookmark_image"/>
-
+        android:contentDescription="@string/bookmark_image"
+        android:src="@drawable/default_photo"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
