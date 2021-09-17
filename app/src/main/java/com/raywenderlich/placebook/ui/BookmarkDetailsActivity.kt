@@ -1,5 +1,6 @@
 package com.raywenderlich.placebook.ui
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -8,6 +9,9 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.MenuItem
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.content.FileProvider
@@ -29,16 +33,20 @@ class BookmarkDetailsActivity : AppCompatActivity(),
     private var photoFile: File? = null
 
 
-  override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        databinding = DataBindingUtil.setContentView(this,
-            R.layout.activity_bookmark_details)
+        databinding = DataBindingUtil.setContentView(
+            this,
+            R.layout.activity_bookmark_details
+        )
         setupToolbar()
         getIntentData()
     }
+
     private fun setupToolbar() {
         setSupportActionBar(databinding.toolbar)
     }
+
     private fun populateImageView() {
         bookmarkDetailsView?.let { bookmarkView ->
             val placeImage = bookmarkView.getImage(this)
@@ -51,13 +59,16 @@ class BookmarkDetailsActivity : AppCompatActivity(),
             }
         }
     }
+
     private fun getIntentData() {
         // 1
         val bookmarkId = intent.getLongExtra(
-            MapsActivity.Companion.EXTRA_BOOKMARK_ID, 0)
+            MapsActivity.Companion.EXTRA_BOOKMARK_ID, 0
+        )
         // 2
 
-        bookmarkDetailsViewModel.getBookmark(bookmarkId)?.observe(this
+        bookmarkDetailsViewModel.getBookmark(bookmarkId)?.observe(
+            this
         ) {
             // 3
             it?.let {
@@ -65,14 +76,17 @@ class BookmarkDetailsActivity : AppCompatActivity(),
                 // 4
                 databinding.bookmarkDetailsView = it
                 populateImageView()
+                populateCategoryList()
             }
         }
     }
+
     override fun onCreateOptionsMenu(menu: android.view.Menu):
             Boolean {
         menuInflater.inflate(R.menu.menu_bookmark_details, menu)
         return true
     }
+
     private fun saveChanges() {
         val name = databinding.editTextName.text.toString()
         if (name.isEmpty()) {
@@ -80,24 +94,29 @@ class BookmarkDetailsActivity : AppCompatActivity(),
         }
         bookmarkDetailsView?.let { bookmarkView ->
             bookmarkView.name = databinding.editTextName.text.toString()
-            bookmarkView.notes =
-                databinding.editTextNotes.text.toString()
-            bookmarkView.address =
-                databinding.editTextAddress.text.toString()
-            bookmarkView.phone =
-                databinding.editTextPhone.text.toString()
+            bookmarkView.notes = databinding.editTextNotes.text.toString()
+            bookmarkView.address = databinding.editTextAddress.text.toString()
+            bookmarkView.phone = databinding.editTextPhone.text.toString()
+            bookmarkView.category = databinding.spinnerCategory.selectedItem as String
             bookmarkDetailsViewModel.updateBookmark(bookmarkView)
         }
         finish()
     }
-    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_save -> {
                 saveChanges()
-                true
+                return true
             }
-            else -> super.onOptionsItemSelected(item)
+            R.id.action_delete -> {
+                deleteBookmark()
+                return true
+            }
+            else -> return super.onOptionsItemSelected(item)
         }
+    }
+
     override fun onCaptureClick() {
         // 1
         photoFile = null
@@ -185,6 +204,63 @@ class BookmarkDetailsActivity : AppCompatActivity(),
                 }
             }
         }
+    }
+    private fun populateCategoryList() {
+        // 1
+        val bookmarkView = bookmarkDetailsView ?: return
+        // 2
+        val resourceId =
+            bookmarkDetailsViewModel.getCategoryResourceId(bookmarkView.category)
+
+        // 3
+        resourceId?.let{ databinding.imageViewCategory.setImageResource(it) }
+
+        // 4
+        val categories = bookmarkDetailsViewModel.getCategories()
+        val adapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_item, categories)
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        // 6
+        databinding.spinnerCategory.adapter = adapter
+        // 7
+        val placeCategory = bookmarkView.category
+
+        databinding.spinnerCategory.setSelection(adapter.getPosition(placeCategory))
+        // 1
+        databinding.spinnerCategory.post {
+            // 2
+            databinding.spinnerCategory.onItemSelectedListener = object :
+                AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>, view:
+                View, position: Int, id: Long) {
+                    // 3
+                    val category = parent.getItemAtPosition(position) as
+                            String
+                    val resourceId =
+                        bookmarkDetailsViewModel.getCategoryResourceId(category)
+                    resourceId?.let {
+                        databinding.imageViewCategory.setImageResource(it) }
+                }
+                override fun onNothingSelected(parent: AdapterView<*>) {
+                    // NOTE: This method is required but not used.
+                }
+            }
+        }
+
+    }
+    private fun deleteBookmark()
+    {
+        val bookmarkView = bookmarkDetailsView ?: return
+        AlertDialog.Builder(this)
+            .setMessage("Delete?")
+            .setPositiveButton("Ok") { _, _ ->
+                bookmarkDetailsViewModel.deleteBookmark(bookmarkView)
+                finish()
+            }
+            .setNegativeButton("Cancel", null)
+            .create().show()
     }
 
     private fun getImageWithAuthority(uri: Uri) =

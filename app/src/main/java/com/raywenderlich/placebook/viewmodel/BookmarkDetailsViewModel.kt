@@ -1,5 +1,6 @@
 package com.raywenderlich.placebook.viewmodel
 
+import android.app.AlertDialog
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
@@ -25,15 +26,17 @@ class BookmarkDetailsViewModel(application: Application) :
             bookmark.name,
             bookmark.phone,
             bookmark.address,
-            bookmark.notes
+            bookmark.notes,
+            bookmark.category
         )
     }
 
     private fun mapBookmarkToBookmarkView(bookmarkId: Long) {
         val bookmark = bookmarkRepo.getLiveBookmark(bookmarkId)
-        bookmarkDetailsView = Transformations.map(bookmark)
-        { repoBookmark ->
-            bookmarkToBookmarkView(repoBookmark)
+        bookmarkDetailsView = Transformations.map(bookmark) { repoBookmark ->
+            repoBookmark?.let {
+                bookmarkToBookmarkView(repoBookmark)
+            }
         }
     }
 
@@ -58,9 +61,11 @@ class BookmarkDetailsViewModel(application: Application) :
             bookmark.phone = bookmarkView.phone
             bookmark.address = bookmarkView.address
             bookmark.notes = bookmarkView.notes
+            bookmark.category = bookmarkView.category
         }
         return bookmark
     }
+
 
     fun updateBookmark(bookmarkView: BookmarkDetailsView) {
         // 1
@@ -71,14 +76,31 @@ class BookmarkDetailsViewModel(application: Application) :
             bookmark?.let { bookmarkRepo.updateBookmark(it) }
         }
     }
+    fun deleteBookmark(bookmarkDetailsView: BookmarkDetailsView) {
+        GlobalScope.launch {
+            val bookmark = bookmarkDetailsView.id?.let {
+                bookmarkRepo.getBookmark(it)
+            }
+            bookmark?.let {
+                bookmarkRepo.deleteBookmark(it)
+            }
+        }
+    }
+    fun getCategoryResourceId(category: String): Int? {
+        return bookmarkRepo.getCategoryResourceId(category)
+    }
+    fun getCategories(): List<String> {
+        return bookmarkRepo.categories
+    }
 
     data class BookmarkDetailsView(
         var id: Long? = null,
         var name: String = "",
         var phone: String = "",
         var address: String = "",
-        var notes: String = ""
-    ) {
+        var notes: String = "",
+        var category: String = "") {
+
         fun getImage(context: Context) = id?.let {
             ImageUtils.loadBitmapFromFile(
                 context,
