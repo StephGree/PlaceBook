@@ -31,10 +31,11 @@ class BookmarkDetailsViewModel(application: Application) :
         )
     }
 
-    private fun mapBookmarkToBookmarkView(bookmarkId: Long) {
+    fun mapBookmarkToBookmarkView(bookmarkId: Long) {
         val bookmark = bookmarkRepo.getLiveBookmark(bookmarkId)
-        bookmarkDetailsView = Transformations.map(bookmark) { repoBookmark ->
-            repoBookmark?.let {
+        bookmarkDetailsView = Transformations.map(bookmark)
+        { repoBookmark ->
+            repoBookmark?.let { repoBookmark ->
                 bookmarkToBookmarkView(repoBookmark)
             }
         }
