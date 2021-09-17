@@ -1,6 +1,6 @@
 package com.raywenderlich.placebook.ui
 
-import android.app.AlertDialog
+
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -12,8 +12,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import com.raywenderlich.placebook.R
@@ -21,6 +21,7 @@ import com.raywenderlich.placebook.databinding.ActivityBookmarkDetailsBinding
 import com.raywenderlich.placebook.util.ImageUtils
 import com.raywenderlich.placebook.viewmodel.BookmarkDetailsViewModel
 import java.io.File
+import java.net.URLEncoder
 
 class BookmarkDetailsActivity : AppCompatActivity(),
     PhotoOptionDialogFragment.PhotoOptionDialogListener {
@@ -41,10 +42,14 @@ class BookmarkDetailsActivity : AppCompatActivity(),
         )
         setupToolbar()
         getIntentData()
+        setupFab()
     }
 
     private fun setupToolbar() {
         setSupportActionBar(databinding.toolbar)
+    }
+    private fun setupFab() {
+        databinding.fab.setOnClickListener { sharePlace() }
     }
 
     private fun populateImageView() {
@@ -250,6 +255,13 @@ class BookmarkDetailsActivity : AppCompatActivity(),
         }
 
     }
+    private fun getImageWithAuthority(uri: Uri) =
+        ImageUtils.decodeUriStreamToSize(
+            uri,
+            resources.getDimensionPixelSize(R.dimen.default_image_width),
+            resources.getDimensionPixelSize(R.dimen.default_image_height),
+            this
+        )
     private fun deleteBookmark()
     {
         val bookmarkView = bookmarkDetailsView ?: return
@@ -262,14 +274,38 @@ class BookmarkDetailsActivity : AppCompatActivity(),
             .setNegativeButton("Cancel", null)
             .create().show()
     }
+    private fun sharePlace() {
+        // 1
+        val bookmarkView = bookmarkDetailsView ?: return
+        // 2
+        var mapUrl = ""
+        if (bookmarkView.placeId == null) {
+            // 3
+            val location = URLEncoder.encode("${bookmarkView.latitude},"
+                    + "${bookmarkView.longitude}", "utf-8")
+            mapUrl = "https://www.google.com/maps/dir/?api=1" +
+                    "&destination=$location"
+        } else {
+            // 4
+            val name = URLEncoder.encode(bookmarkView.name, "utf-8")
+            mapUrl = "https://www.google.com/maps/dir/?api=1" +
+                    "&destination=$name&destination_place_id=" +
+                    "${bookmarkView.placeId}"
+        }
+        // 5
+        val sendIntent = Intent()
+        sendIntent.action = Intent.ACTION_SEND
+        // 6
+        sendIntent.putExtra(Intent.EXTRA_TEXT,
+            "Check out ${bookmarkView.name} at:\n$mapUrl")
+        sendIntent.putExtra(Intent.EXTRA_SUBJECT,
+            "Sharing ${bookmarkView.name}")
+        // 7
+        sendIntent.type = "text/plain"
+        // 8
+        startActivity(sendIntent)
+    }
 
-    private fun getImageWithAuthority(uri: Uri) =
-        ImageUtils.decodeUriStreamToSize(
-            uri,
-            resources.getDimensionPixelSize(R.dimen.default_image_width),
-            resources.getDimensionPixelSize(R.dimen.default_image_height),
-            this
-        )
     companion object {
         private const val REQUEST_CAPTURE_IMAGE = 1
         private const val REQUEST_GALLERY_IMAGE = 2

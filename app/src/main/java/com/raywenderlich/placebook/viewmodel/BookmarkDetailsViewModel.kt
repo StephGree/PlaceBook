@@ -27,7 +27,10 @@ class BookmarkDetailsViewModel(application: Application) :
             bookmark.phone,
             bookmark.address,
             bookmark.notes,
-            bookmark.category
+            bookmark.category,
+            bookmark.longitude,
+            bookmark.latitude,
+            bookmark.placeId
         )
     }
 
@@ -100,7 +103,10 @@ class BookmarkDetailsViewModel(application: Application) :
         var phone: String = "",
         var address: String = "",
         var notes: String = "",
-        var category: String = "") {
+        var category: String = "",
+        var longitude: Double = 0.0,
+        var latitude: Double = 0.0,
+        var placeId: String? = null) {
 
         fun getImage(context: Context) = id?.let {
             ImageUtils.loadBitmapFromFile(

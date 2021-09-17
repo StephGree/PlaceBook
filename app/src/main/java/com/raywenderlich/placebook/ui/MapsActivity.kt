@@ -9,6 +9,8 @@ import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -89,7 +91,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 location.latitude = place.latLng?.latitude ?: 0.0
                 location.longitude = place.latLng?.longitude ?: 0.0
                 updateMapToLocation(location)
+                showProgress()
                 // 5
+
                 displayPoiGetPhotoStep(place)
             }
         }
@@ -123,6 +127,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
     private fun displayPoi(pointOfInterest: PointOfInterest) {
+        showProgress()
         displayPoiGetPlaceStep(pointOfInterest)
     }
     private fun displayPoiGetPlaceStep(pointOfInterest: PointOfInterest) {
@@ -136,7 +141,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             Place.Field.LAT_LNG,
             Place.Field.TYPES)
 
-
         val request = FetchPlaceRequest
             .builder(placeId, placeFields)
             .build()
@@ -145,18 +149,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .addOnSuccessListener { response ->
                 val place = response.place
                 displayPoiGetPhotoStep(place)
-            }
-
-            .addOnFailureListener { exception ->
+            }.addOnFailureListener { exception ->
                 if (exception is ApiException) {
                     val statusCode = exception.statusCode
-                    Log.e(
-                        TAG,
+                    Log.e(TAG,
                         "Place not found: " +
                                 exception.message + ", " +
                                 "statusCode: " + statusCode)
-
-
+                    hideProgress()
                 }
             }
     }
@@ -193,16 +193,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                 exception.message + ", " +
                                 "statusCode: " + statusCode)
                 }
+                hideProgress()
             }
     }
     private fun displayPoiDisplayStep(place: Place, photo: Bitmap?)
     {
-//        val iconPhoto = if (photo == null) {
-//            BitmapDescriptorFactory.defaultMarker()
-//        }
-//        else {
-//            BitmapDescriptorFactory.fromBitmap(photo)
-//        }
+        hideProgress()
+
         val marker = map.addMarker(MarkerOptions()
             .position(place.latLng as LatLng)
             .title(place.name)
@@ -400,9 +397,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
-
-
-
+    private fun disableUserInteraction() {
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    }
+    private fun enableUserInteraction() {
+        window.clearFlags(
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    }
+    private fun showProgress() {
+        databinding.mainMapView.progressBar.visibility =
+            ProgressBar.VISIBLE
+        disableUserInteraction()
+    }
+    private fun hideProgress() {
+        databinding.mainMapView.progressBar.visibility =
+            ProgressBar.GONE
+        enableUserInteraction()
+    }
     companion object {
         const val EXTRA_BOOKMARK_ID = "com.raywenderlich.placebook.EXTRA_BOOKMARK_ID"
 

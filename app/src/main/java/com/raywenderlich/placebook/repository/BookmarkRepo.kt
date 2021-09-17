@@ -1,5 +1,6 @@
 package com.raywenderlich.placebook.repository
 
+
 import android.content.Context
 import androidx.lifecycle.LiveData
 import com.google.android.libraries.places.api.model.Place
@@ -8,7 +9,7 @@ import com.raywenderlich.placebook.db.BookmarkDao
 import com.raywenderlich.placebook.db.PlaceBookDatabase
 import com.raywenderlich.placebook.model.Bookmark
 
-class BookmarkRepo(context: Context) {
+class BookmarkRepo(private val context: Context) {
     // 2
     private val db = PlaceBookDatabase.getInstance(context)
     private val bookmarkDao: BookmarkDao = db.bookmarkDao()
