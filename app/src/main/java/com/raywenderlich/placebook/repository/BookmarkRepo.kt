@@ -41,10 +41,8 @@ class BookmarkRepo(context: Context) {
         bookmarkDao.deleteBookmark(bookmark)
     }
 
-    fun getLiveBookmark(bookmarkId: Long): LiveData<Bookmark> {
-        val bookmark = bookmarkDao.loadLiveBookmark(bookmarkId)
-        return bookmark
-    }
+    fun getLiveBookmark(bookmarkId: Long): LiveData<Bookmark> =
+        bookmarkDao.loadLiveBookmark(bookmarkId)
 
     fun placeTypeToCategory(placeType: Place.Type): String {
         var category = "Other"
